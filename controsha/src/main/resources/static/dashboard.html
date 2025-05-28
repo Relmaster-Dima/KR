@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Ваши квесты и продукты</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px #0001; }
+        h2 { text-align: center; }
+        .section { margin-bottom: 30px; }
+        ul { list-style: none; padding: 0; }
+        li { padding: 8px 0; border-bottom: 1px solid #eee; }
+        .back { display: block; margin-bottom: 20px; color: #1976d2; text-decoration: none; }
+        .back:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a href="/" class="back">&larr; Назад</a>
+    <h2>Ваши квесты</h2>
+    <div class="section">
+        <ul id="quests"></ul>
+    </div>
+    <h2>Ваши продукты</h2>
+    <div class="section">
+        <ul id="products"></ul>
+    </div>
+</div>
+<script>
+    function getParam(name) {
+        const url = new URL(window.location.href);
+        return url.searchParams.get(name);
+    }
+    const userId = getParam('userId');
+    if (!userId) {
+        window.location.href = '/';
+    }
+    fetch('/api/dashboard?userId=' + encodeURIComponent(userId))
+        .then(r => r.json())
+        .then(data => {
+            const quests = data.quests || [];
+            const products = data.products || [];
+            const questsList = document.getElementById('quests');
+            const productsList = document.getElementById('products');
+            if (quests.length === 0) {
+                questsList.innerHTML = '<li>Нет квестов</li>';
+            } else {
+                questsList.innerHTML = quests.map(q => `
+                    <li>
+                        <table style="margin-bottom:10px; border-collapse:collapse;">
+                            ${Object.entries(q).map(([k, v]) => `<tr><td style='font-weight:bold; padding-right:8px;'>${k}</td><td>${v}</td></tr>`).join('')}
+                        </table>
+                    </li>
+                `).join('');
+            }
+            if (products.length === 0) {
+                productsList.innerHTML = '<li>Нет продуктов</li>';
+            } else {
+                productsList.innerHTML = products.map(p => `
+                    <li>
+                        <table style="margin-bottom:10px; border-collapse:collapse;">
+                            ${Object.entries(p).map(([k, v]) => {
+                                if (k === 'photo' && v) {
+                                    return `<tr><td style='font-weight:bold; padding-right:8px;'>${k}</td><td><img src="${v}" alt="Фото" style="max-width:150px;max-height:150px"></td></tr>`;
+                                }
+                                return `<tr><td style='font-weight:bold; padding-right:8px;'>${k}</td><td>${v}</td></tr>`;
+                            }).join('')}
+                        </table>
+                    </li>
+                `).join('');
+            }
+        })
+        .catch(() => {
+            document.getElementById('quests').innerHTML = '<li>Ошибка загрузки</li>';
+            document.getElementById('products').innerHTML = '<li>Ошибка загрузки</li>';
+        });
+</script>
+</body>
+</html> 
